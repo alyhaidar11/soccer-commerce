@@ -23,7 +23,6 @@
 
 {% for product in product_list %}
 <div>
-  <strong>ID:</strong> {{ product.id }} <br>
   <h3>{{ product.name }}</h3>
   <p>Harga: Rp{{ product.price|floatformat:0 }}</p>
 
