@@ -118,3 +118,6 @@ Client (Postman / Browser)
 
 6. tidak ada
 
+link gambar POSTMAN :
+
+https://drive.google.com/drive/folders/1k8qZLErAUMahK2kJrU42onvPL4esjMY5?usp=sharing 
