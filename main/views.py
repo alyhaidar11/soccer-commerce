@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from main.forms import ProductForm
-from main.models import Product
+from main.models import Product, Employee
 from django.http import HttpResponse
 from django.core import serializers
 from django.contrib.auth.forms import UserCreationForm
@@ -127,3 +127,43 @@ def logout_user(request):
     response = HttpResponseRedirect(reverse('main:login'))
     response.delete_cookie('last_login')
     return response
+
+
+def add_employee(request):
+
+
+    employee_name = 'aly'
+    employee_age = '19'
+    employee_persona = 'student'
+
+    employee_instance = Employee.objects.create(
+        name=employee_name,
+        age=employee_age,
+        Persona=employee_persona
+    ) 
+
+    
+
+    return render(request, "main.html", {'Employee':employee_instance})
+
+def edit_product(request, id):
+    news = get_object_or_404(Product, pk=id)
+    form = ProductForm(request.POST or None, instance=news)
+    if form.is_valid() and request.method == 'POST':
+        form.save()
+        return redirect('main:show_main')
+
+    context = {
+        'form': form
+    }
+
+    return render(request, "edit_product.html", context)
+
+def delete_product(request, id):
+    product = get_object_or_404(Product, pk=id)
+    product.delete()
+    return HttpResponseRedirect(reverse('main:show_main'))
+
+
+
+    
