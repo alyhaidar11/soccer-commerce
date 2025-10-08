@@ -73,7 +73,7 @@ def show_json(request):
             'name': product.name,
             'description': product.description,
             'price' : product.price,
-            'quantity ' : product.quantity,
+            'quantity' : product.quantity,
 
             'category': product.category,
             'thumbnail': product.thumbnail,
@@ -96,7 +96,6 @@ def show_xml_by_id(request, product_id):
    
 def show_json_by_id(request, product_id):
    try:
-       product_item = Product.objects.get(pk=product_id)
        product = Product.objects.select_related('user').get(pk=product_id)
        data = {
             'id': str(product.id),
@@ -211,6 +210,22 @@ def add_product_entry_ajax(request):
     new_product.save()
 
     return HttpResponse(b"CREATED", status=201)
+
+@csrf_exempt
+@require_POST
+def update_product_entry_ajax(request, id):
+    product = get_object_or_404(Product, pk=id)
+    product.name = request.POST.get("name")
+    product.price = request.POST.get("price")
+    product.quantity = request.POST.get("quantity")
+    product.description = request.POST.get("description")
+    product.category = request.POST.get("category")
+    product.thumbnail = request.POST.get("thumbnail")
+    product.is_featured = request.POST.get("is_featured") == 'on'
+    product.save()
+
+    return HttpResponse(b"UPDATED", status=200)
+
 
 
 

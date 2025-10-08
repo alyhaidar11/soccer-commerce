@@ -1,6 +1,6 @@
 <!-- Modal -->
 <div id="crudModal" class="hidden fixed inset-0 z-50 w-full flex items-center justify-center bg-gray-900 bg-opacity-70">
-  <div id="crudModalContent" class="bg-gray-800 rounded-2xl shadow-2xl w-5/6 sm:w-3/5 md:w-1/2 lg:w-2/5 xl:w-1/3 max-h-screen overflow-y-auto border border-gray-700">
+  <div id="crudModalContent" class="bg-gray-800 rounded-2xl shadow-2xl w-5/6 sm:w-3/5 md:w-1/2 lg:w-2/5 xl:w-1/3 max-h-screen overflow-y-auto border border-gray-700 transition-all duration-200 opacity-0 scale-95">
     
     <!-- Header -->
     <div class="flex items-center justify-between p-6 border-b border-gray-700">
@@ -25,12 +25,28 @@
     <div class="px-6 py-6">
       <form id="productForm" class="space-y-5">
         
-        <!-- Title -->
+        <!-- Name -->
         <div>
-          <label for="title" class="block text-sm font-medium text-gray-300">Product Title</label>
-          <input type="text" id="title" name="title"
+          <label for="name" class="block text-sm font-medium text-gray-300">Product Name</label>
+          <input type="text" id="name" name="name"
             class="mt-2 block w-full bg-gray-900 text-white border border-gray-700 rounded-md px-3 py-2 focus:ring-[#7665AF] focus:border-[#7665AF]"
-            placeholder="Enter product title" required>
+            placeholder="Enter product name" required>
+        </div>
+
+        <!-- Price -->
+        <div>
+          <label for="price" class="block text-sm font-medium text-gray-300">Price</label>
+          <input type="number" id="price" name="price" min="0"
+            class="mt-2 block w-full bg-gray-900 text-white border border-gray-700 rounded-md px-3 py-2 focus:ring-[#7665AF] focus:border-[#7665AF]"
+            placeholder="Enter product price" required>
+        </div>
+
+        <!-- Quantity -->
+        <div>
+          <label for="quantity" class="block text-sm font-medium text-gray-300">Quantity</label>
+          <input type="number" id="quantity" name="quantity" min="0"
+            class="mt-2 block w-full bg-gray-900 text-white border border-gray-700 rounded-md px-3 py-2 focus:ring-[#7665AF] focus:border-[#7665AF]"
+            placeholder="Enter stock quantity" required>
         </div>
 
         <!-- Description -->
@@ -83,50 +99,126 @@
     </div>
   </div>
 </div>
-<script>
-  function showCreateModal() {
-      const modal = document.getElementById('crudModal');
-      const modalContent = document.getElementById('crudModalContent');
 
-      modal.classList.remove('hidden'); 
-      setTimeout(() => {
-        modalContent.classList.remove('opacity-0', 'scale-95');
-        modalContent.classList.add('opacity-100', 'scale-100');
-      }, 50); 
+<script>
+    let editingProductId = null;  // null = create mode, isi UUID = edit mode
+
+  async function addOrUpdateProduct() {
+    const form = document.querySelector('#productForm');
+    const formData = new FormData(form);
+    let url = "{% url 'main:add_product_entry_ajax' %}";
+
+    if (editingProductId) {
+      url = `/update-product-ajax/${editingProductId}/`;
+    }
+
+    await fetch(url, { method: "POST", body: formData });
+
+    form.reset();
+    hideCreateModal();
+    showToast(editingProductId ? 'Product updated successfully!' : 'Product added successfully!', '', 'success');
+
+    document.dispatchEvent(new CustomEvent('productAdded')); // Refresh list
+    editingProductId = null;
+  }
+
+  document.getElementById("productForm").addEventListener("submit", async function(e) {
+  e.preventDefault();
+  const formData = new FormData(this);
+  let url = "{% url 'main:add_product_entry_ajax' %}";
+  if (editingProductId) {
+    url = `/update-product-ajax/${editingProductId}/`;
+  }
+
+  await fetch(url, { method: "POST", body: formData });
+
+  this.reset();
+  hideCreateModal();
+  showToast(editingProductId ? 'Product updated successfully!' : 'Product added successfully!', '', 'success');
+  document.dispatchEvent(new CustomEvent('productAdded'));
+  editingProductId = null;
+});
+
+  // Untuk mengisi modal dengan data saat klik edit
+  function showEditModal(product) {
+    editingProductId = product.id;
+    document.getElementById('name').value = product.name;
+    document.getElementById('price').value = product.price;
+    document.getElementById('quantity').value = product.quantity;
+    document.getElementById('description').value = product.description;
+    document.getElementById('category').value = product.category;
+    document.getElementById('thumbnail').value = product.thumbnail;
+    document.getElementById('is_featured').checked = product.is_featured;
+
+    document.querySelector('#crudModal h3').textContent = 'Edit Product';
+    document.querySelector('#submitProduct').textContent = 'Update Product';
+    showCreateModal();
+  }
+  function showCreateModal() {
+    const modal = document.getElementById('crudModal');
+    const modalContent = document.getElementById('crudModalContent');
+
+    modal.classList.remove('hidden'); 
+    setTimeout(() => {
+      modalContent.classList.remove('opacity-0', 'scale-95');
+      modalContent.classList.add('opacity-100', 'scale-100');
+    }, 50);
   }
 
   function hideCreateModal() {
-      const modal = document.getElementById('crudModal');
-      const modalContent = document.getElementById('crudModalContent');
+    const modal = document.getElementById('crudModal');
+    const modalContent = document.getElementById('crudModalContent');
 
-      modalContent.classList.remove('opacity-100', 'scale-100');
-      modalContent.classList.add('opacity-0', 'scale-95');
+    modalContent.classList.remove('opacity-100', 'scale-100');
+    modalContent.classList.add('opacity-0', 'scale-95');
 
-      setTimeout(() => {
-        modal.classList.add('hidden');
-      }, 150); 
+    setTimeout(() => {
+      modal.classList.add('hidden');
+      editingProductId = null;
+      document.querySelector('#crudModal h3').textContent = 'Create New Product';
+      document.querySelector('#submitProduct').textContent = 'Publish Product';
+    }, 150);
   }
 
   async function addProductEntry() {
     await fetch("{% url 'main:add_product_entry_ajax' %}", {
       method: "POST",
       body: new FormData(document.querySelector('#productForm')),
-    })
+    });
 
     document.getElementById("productForm").reset();
-    hideModal();
-      
+    hideCreateModal();
+    
     // Show toast notification
-    showToast('Product added successfully!', '', 'success');
+     if (isEditing) {
+      showToast("Product edited successfully!", "", "success");
+    } else {
+      showToast("Product added successfully!", "", "success");
+    }
 
-    // Dispatch custom event to notify main.html about new data
+    // Notify main page
     document.dispatchEvent(new CustomEvent('productAdded'));
-
     return false;
   }
 
   document.getElementById("productForm").addEventListener("submit", function(e) {
     e.preventDefault();
     addProductEntry();
-})
+  });
+  function showEditModal(product) {
+  editingProductId = product.id;
+  document.getElementById('name').value = product.name;
+  document.getElementById('price').value = product.price;
+  document.getElementById('quantity').value = product.quantity;
+  document.getElementById('description').value = product.description;
+  document.getElementById('category').value = product.category;
+  document.getElementById('thumbnail').value = product.thumbnail || '';
+  document.getElementById('is_featured').checked = product.is_featured;
+
+  document.querySelector('#crudModal h3').textContent = 'Edit Product';
+  document.querySelector('#submitProduct').textContent = 'Update Product';
+
+  showCreateModal();
+}
+
 </script>
