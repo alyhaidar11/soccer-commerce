@@ -67,7 +67,6 @@ def show_xml(request):
 
 def show_json(request):
     product_list = Product.objects.all()
-    json_data = serializers.serialize("json", product_list)
     data = [
         {
             'id': str(product.id),
@@ -199,7 +198,7 @@ def add_product_entry_ajax(request):
     is_featured = request.POST.get("is_featured") == 'on'  # checkbox handling
     user = request.user
 
-    new_product = News(
+    new_product = Product(
         name=name, 
         price=price,
         quantity=quantity,
